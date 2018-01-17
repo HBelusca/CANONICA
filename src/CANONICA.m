@@ -2707,6 +2707,9 @@ SolveSimpleEqns[{unsolvedLinearEqns_, solvedLinearEqns_, vars_}] :=
     Solve[newSimpleEqns, 
      Intersection[vars, Variables[Map[#[[1]] &, newSimpleEqns]]]];
    On[Solve::svars];
+   If[solNewSimpleEqns === {{}}, 
+     Return[{unsolvedLinearEqns, solvedLinearEqns, vars}]
+   ];
    If[solNewSimpleEqns === {}, Return[{False, {}, {}}];];
    rules = Dispatch[solNewSimpleEqns[[1]]];
    nSys = Union[DeleteCases[unsolvedLinearEqns /. rules, True]];
