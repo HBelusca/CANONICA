@@ -2243,12 +2243,9 @@ LinearSystemSolver[parameterEquations_List, vars_List,
       Reverse[forwardSolved]]}];];
 
 
-LinearTest[expr_] := 
- Return[If[
-   Sort[Function[monomial, 
-        Total[Map[Function[term, term[[2]]], 
-          Select[FactorList[monomial], ! NumberQ[#1[[1]]] &]]]] /@ 
-       MonomialList[expr]][[-1]] > 1, False, True]];
+
+LinearTest[expr_] :=
+	MatchQ[Normal[CoefficientArrays[expr, Variables[expr]]], {_?NumberQ, {__?NumberQ}}];
 
 
 MinimizePrimeFactors[ratList_List] := 
