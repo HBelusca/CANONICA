@@ -2129,7 +2129,8 @@ ForwardSolve[{equations_, prevRules_List, vars_List}] :=
       Append[prevRules, {}], vars}]];
    If[sol === {}, Return[False]];
    rules = Dispatch[sol[[1]]];
-   newSys = Union[DeleteCases[equations /. rules, True]];
+   {relPart,irrelPart}=SplitRelevantIrrelevant[equations,sol[[1]] /. Rule[x_,_]:>x];
+   newSys = Join[irrelPart,Union[DeleteCases[relPart /. rules, True]]];
    Return[{newSys, Append[prevRules, sol[[1]]], vars}];];
 
 
@@ -2698,7 +2699,7 @@ SolveLinearPart[equations_List] :=
 
 
 SolveSimpleEqns[{unsolvedLinearEqns_, solvedLinearEqns_, vars_}] := 
-  Module[{newSimpleEqns, solNewSimpleEqns, rules, nSys},
+  Module[{newSimpleEqns, solNewSimpleEqns, rules, nSys,relPart,irrelPart},
    If[! FreeQ[unsolvedLinearEqns, False], Return[{False, {}, {}}];];
    newSimpleEqns = 
     Select[unsolvedLinearEqns, Length[Variables[#1[[1]]]] === 1 &];
@@ -2712,7 +2713,9 @@ SolveSimpleEqns[{unsolvedLinearEqns_, solvedLinearEqns_, vars_}] :=
    ];
    If[solNewSimpleEqns === {}, Return[{False, {}, {}}];];
    rules = Dispatch[solNewSimpleEqns[[1]]];
-   nSys = Union[DeleteCases[unsolvedLinearEqns /. rules, True]];
+   {relPart,irrelPart}=SplitRelevantIrrelevant[unsolvedLinearEqns,
+	solNewSimpleEqns[[1]] /. Rule[x_,_]:>x];
+   nSys = Join[irrelPart,Union[DeleteCases[relPart /. rules, True]]];
    Return[{nSys, Append[solvedLinearEqns, solNewSimpleEqns[[1]]], 
      vars}];
    ];
@@ -2862,6 +2865,13 @@ SplitNumerator[group_List, alphabet_List, invariants_List] :=
     ];
    ];
 
+SplitRelevantIrrelevant[expr_, vars_] :=
+	Block[{tmp, res, positions},
+		tmp = Variables[#[[1]]] & /@ expr;
+		positions = Position[(Intersection[#, vars] =!= {}) & /@ tmp, True];
+		res = Extract[expr, positions];
+		{res, Complement[expr, res]}
+	];
 
 StartKernels[] := Module[{},
    If[ValueQ[$ComputeParallel],
