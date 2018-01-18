@@ -1578,7 +1578,7 @@ CheckNextTsVanish[aHat_List, f_, alphabet_List, invariants_List,
 
 
 CheckRationality[a_List, invariants_List] := 
-  Module[{freeOfExpFunctionsQ, freeOfOtherHeads}, 
+  Module[{freeOfExpFunctionsQ, freeOfOtherHeads,freeOfRationalPowersQ}, 
    freeOfExpFunctionsQ = 
     Cases[a, 
       Power[___, 
@@ -1588,7 +1588,12 @@ CheckRationality[a_List, invariants_List] :=
     Complement[
       Union@Flatten[Reap[MapAll[Sow[Head[#]] &, a]]], {Integer, List, 
        Plus, Power, Rational, Symbol, Times}] === {};
-   Return[freeOfExpFunctionsQ && freeOfOtherHeads];];
+
+   freeOfRationalPowersQ = 
+ 	Cases[a,Power[b_ /; !IndependentOfInvariantsQ[b, Append[invariants, eps]], 
+	_Rational],Infinity]==={};
+
+   Return[freeOfExpFunctionsQ && freeOfOtherHeads && freeOfRationalPowersQ];];
 
 
 CheckSectorBoundaries[a_List, sectorBoundaries_List] := 
@@ -3014,6 +3019,11 @@ TransformDiagonalBlock[a_List, invariants_List,
         Take[trDlog, Length[alphabet]], {eps, 0, 0}]]];
    If[Length[aNormed[[1]]] === 1, 
     trafo = {{pureContribution*mixedContribution}};
+    
+    If[ !CheckRationality[trafo, invariants],
+    Message[TransformDiagonalBlock::nonrational];
+    Return[False];];
+
     Return[{trafo, TransformDE[aNormed, invariants, trafo]}];];
    If[! And @@ 
       Map[IntegerQ[#[[1, 1]]] &, 
