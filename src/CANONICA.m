@@ -775,7 +775,7 @@ CalcAnsatzD[e_List, c_List, b_List, invariants_List,
         Simplify[
          Union[Flatten[
            Outer[Times, Union[{1}, negPowerFactors], 
-            Union[{1}, posPowerFactors]]]]]], 1]];
+            Union[{1}, posPowerFactors]]]]], DistributedContextsSwitch[$ComputeParallel]], 1]];
    Return[ApplyRelations[combinedFactors, extAlphabet, invariants]];];
 
 
@@ -1004,7 +1004,7 @@ CalcNextDn[e_List, c_List, bhat_List, hbar_, khat_, nmin_Integer,
      Select[Variables[equationSet], Head[#1] === g &]];
    linearSystem = (#1 == 0 &) /@ 
      Flatten[ParallelizeMap[$ComputeParallel][
-       RatFunctionZeroCoeffs[#1, invariants] &, equationSet]];
+       RatFunctionZeroCoeffs[#1, invariants] &, equationSet, DistributedContextsSwitch[$ComputeParallel]]];
    If[OptionValue[VerbosityLevel] >= 12, 
     Print["Found " <> ToString[Length[linearSystem]] <> 
        " equations."];];
@@ -1114,7 +1114,7 @@ CalcNextTn[aHat_List, f_, alphabet_List, invariants_List,
       "."]];
    parameterEquations = (#1 == 0 &) /@ 
      Flatten[ParallelizeMap[$ComputeParallel][
-       RatFunctionZeroCoeffs[#1, invariants] &, equationSet]];
+       RatFunctionZeroCoeffs[#1, invariants] &, equationSet, DistributedContextsSwitch[$ComputeParallel]]];
    If[OptionValue[VerbosityLevel] >= 12, 
     Print["Found " <> ToString[Length[parameterEquations]] <> 
       " equations."]];
@@ -1464,7 +1464,7 @@ CheckNextDsVanish[newPreviousDs_List, newPreviousSolution_List,
    linearSystem = 
     Map[# == 0 &, 
      Flatten[ParallelizeMap[$ComputeParallel][
-       RatFunctionZeroCoeffs[#, invariants] &, equationSet]]];
+       RatFunctionZeroCoeffs[#, invariants] &, equationSet, DistributedContextsSwitch[$ComputeParallel]]]];
    Off[Solve::svars];
    preSol = LinearSystemSolver[linearSystem, vars, 0];
    On[Solve::svars];
@@ -1514,7 +1514,7 @@ CheckNextTsVanish[aHat_List, f_, alphabet_List, invariants_List,
    equationSet = Flatten[deAtNextDeltaOrders];
    nParameterEquations = (#1 == 0 &) /@ 
      Flatten[ParallelizeMap[$ComputeParallel][
-       RatFunctionZeroCoeffs[#1, invariants] &, equationSet]];
+       RatFunctionZeroCoeffs[#1, invariants] &, equationSet, DistributedContextsSwitch[$ComputeParallel]]];
    nlinearPartSolved = 
     SolveLinearPart[Join[nParameterEquations, previousNonlinears]];
    If[nlinearPartSolved === {}, Return[False];];
@@ -1690,6 +1690,11 @@ DissipateFactors[lettersBounds_List, eDlog_List, cDlog_List] :=
      MapThread[Union, {lettersBounds, eStep0, eStep, cStep}, 
       3], {3}]];];
 
+DistributedContextsSwitch[True] :=
+	DistributedContexts -> Automatic;
+
+DistributedContextsSwitch[x_/;x=!=True] :=
+	Unevaluated[Sequence[]];
 
 EliminateLinearEqns[prevNLEquations_List, prevLinearSoln_List, 
    vars_List] := 
@@ -1699,7 +1704,7 @@ EliminateLinearEqns[prevNLEquations_List, prevLinearSoln_List,
    unionEquations = Union[prevNLEquations];
    linearTestRes = 
     ParallelizeMap[$ComputeParallel][LinearTest[#1[[1]]] &, 
-     unionEquations];
+     unionEquations, DistributedContextsSwitch[$ComputeParallel]];
    linearEqns = Pick[unionEquations, linearTestRes];
    nonLinearEqns = Complement[unionEquations, linearEqns];
    Off[Solve::svars];
@@ -2025,7 +2030,7 @@ FindAnsatzT[a_List, invariants_List, OptionsPattern[]] :=
         Simplify[
          Union[Flatten[
            Outer[Times, Union@Join[{1}, negPowerFactors], 
-            Union@Join[{1}, posPowerFactors]]]]]], 1]]];
+            Union@Join[{1}, posPowerFactors]]]]], DistributedContextsSwitch[$ComputeParallel]], 1]]];
    Return[ApplyRelations[combinedFactors, extAlphabet, invariants]];];
 
 
